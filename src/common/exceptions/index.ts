@@ -1,0 +1,7 @@
+export * from "./UnauthorizeException"
+export * from "./UserAlreadyExistsException"
+export * from "./UserNotFoundException"
+export * from "./WrongPasswordException"
+export * from "./InvalidRoleException"
+export * from "./ObjectModelNotFoundException"
+export * from "./ObjectModelOperationException"
