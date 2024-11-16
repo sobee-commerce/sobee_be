@@ -1,0 +1,13 @@
+import { Types } from "mongoose"
+import { IProduct } from "./IProduct"
+
+export interface IBrand {
+  _id?: string | Types.ObjectId
+  name: string
+  logo: string
+  isActive: boolean
+  website: string
+  products: string[] | Types.ObjectId[] | IProduct[]
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
