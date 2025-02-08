@@ -18,7 +18,9 @@ export class AuthController implements IRoute {
     REFRESH_TOKEN: "/refresh-token",
     LOG_OUT: "/logout",
     ME: "/me",
-    CHANGE_PASSWORD: "/change-password"
+    CHANGE_PASSWORD: "/change-password",
+    FORGOT_PASSWORD: "/forgot-password/mail",
+    VALIDATE_FORGOT_PASSWORD: "/forgot-password/validate"
   }
 
   private static readonly authService = new AuthService()
@@ -54,6 +56,18 @@ export class AuthController implements IRoute {
       middleware.verifyToken,
       middleware.mustHaveFields("oldPassword", "newPassword"),
       asyncHandler(this.changePassword)
+    )
+
+    this.router.post(
+      this.PATHS.FORGOT_PASSWORD,
+      middleware.mustHaveFields("emailOrPhone"),
+      asyncHandler(this.sendForgotPasswordMail)
+    )
+
+    this.router.post(
+      this.PATHS.VALIDATE_FORGOT_PASSWORD,
+      middleware.mustHaveFields("email", "code"),
+      asyncHandler(this.validateForgotPassword)
     )
   }
 
@@ -92,6 +106,16 @@ export class AuthController implements IRoute {
       userId: req.userId
     })
     new SuccessfulResponse(response, HttpStatusCode.OK, "Change password successfully").from(res)
+  }
+
+  private async sendForgotPasswordMail(req: Request, res: Response) {
+    const response = await AuthController.authService.sendForgotPasswordMail(req.body.emailOrPhone)
+    new SuccessfulResponse(response, HttpStatusCode.OK, "Send forgot password mail successfully").from(res)
+  }
+
+  private async validateForgotPassword(req: Request, res: Response) {
+    const response = await AuthController.authService.validateForgotPassword(req.body.email, req.body.code)
+    new SuccessfulResponse(response, HttpStatusCode.OK, "Validate forgot password successfully").from(res)
   }
 
   getPath(): string {

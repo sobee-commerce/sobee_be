@@ -15,12 +15,20 @@ import {
   UserNotFoundException,
   WrongPasswordException
 } from "@/common/exceptions"
-import { comparePassword, createKeyPair, createTokenPair, hashPassword } from "@/common/utils"
+import {
+  BadRequestResponse,
+  comparePassword,
+  createKeyPair,
+  createTokenPair,
+  hashPassword,
+  redisClient
+} from "@/common/utils"
 import { ERole } from "@/enum"
 import KeyTokenService from "@/common/utils/keyToken"
 import { IKeyToken } from "@/interface/schema"
 import KeyToken from "@/models/KeyToken"
 import { RefreshTokenResponse } from "./dto/refreshToken.dto"
+import transporter, { sendMail } from "@/common/utils/mailer"
 
 export class AuthService implements AuthRepository {
   async register(data: RegisterRequest): Promise<RegisterResponse> {
@@ -212,13 +220,65 @@ export class AuthService implements AuthRepository {
     return null
   }
 
-  async forgotPassword(emailOrPhone: string) {
+  async sendForgotPasswordMail(emailOrPhone: string) {
     const user = await User.findOne({ $or: [{ phoneNumber: emailOrPhone }, { email: emailOrPhone }] })
 
     if (!user) {
       throw new UserNotFoundException()
     }
 
+    const code = Math.floor(100000 + Math.random() * 900000)
+
+    await redisClient.set(`forgot-password:${user.email}`, code, {
+      EX: 60 * 15 // 15 minutes
+    })
+
     // send email or sms here
+    await sendMail({
+      to: user.email,
+      subject: "Forgot password",
+      text: `Your code is ${code}. Please use this code to reset your password. This code will expire in 15 minutes`
+    })
+
+    return user.email
+  }
+
+  async validateForgotPassword(email: string, code: string) {
+    const forgotPasswordKey = `forgot-password:${email}`
+    const forgotPasswordCode = await redisClient.get(forgotPasswordKey)
+
+    if (!forgotPasswordCode) {
+      throw new BadRequestResponse("Code is expired")
+    }
+
+    if (forgotPasswordCode !== code) {
+      throw new BadRequestResponse("Code is invalid")
+    }
+
+    const randomPassword = Math.random().toString(36).slice(-8)
+    await this.resetPassword(email, randomPassword)
+    await redisClient.del(forgotPasswordKey)
+
+    await sendMail({
+      to: email,
+      subject: "Reset password",
+      text: `Your new password is ${randomPassword}. Please use this password to login.`
+    })
+
+    return true
+  }
+
+  async resetPassword(email: string, newPassword: string) {
+    const user = await User.findOne({ email })
+
+    if (!user) {
+      throw new UserNotFoundException()
+    }
+
+    const hashedPassword = await hashPassword(newPassword)
+
+    await Credential.updateOne({ userId: user.id }, { password: hashedPassword })
+
+    return true
   }
 }
