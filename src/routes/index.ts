@@ -9,10 +9,7 @@ import {
   ChatRoomController,
   CouponController,
   CustomerController,
-  DayOffController,
   FaqController,
-  NotificationController,
-  OrderController,
   OrderItemController,
   PaymentAccountController,
   PermissionController,
@@ -27,7 +24,8 @@ import {
   UserController,
   AssetController,
   QuestionController,
-  FavoriteController
+  FavoriteController,
+  OrderController
 } from "@/controller"
 import { AnalyticsController } from "@/controller/analytics"
 import { Express } from "express"
@@ -41,7 +39,6 @@ function getRoutes(app: Express) {
     new ChatRoomController(),
     new CouponController(),
     new CustomerController(),
-    new NotificationController(),
     new OrderController(),
     new OrderItemController(),
     new PermissionController(),
@@ -51,7 +48,6 @@ function getRoutes(app: Express) {
     new StaffController(),
     new UserController(),
     new TaxController(),
-    new DayOffController(),
     new BrandController(),
     new ShippingController(),
     new FaqController(),
@@ -68,6 +64,7 @@ function getRoutes(app: Express) {
   controllers.forEach((controller) => {
     app.use(controller.getPath(), asyncHandler(controller.getRouter()))
   })
+  //@ts-ignore
   app.use(errorHandlerMiddleware)
 }
 

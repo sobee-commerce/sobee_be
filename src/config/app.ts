@@ -1,29 +1,8 @@
 import express, { Request, Response } from "express"
 import cors from "cors"
 import morgan from "morgan"
-import i18next from "i18next"
-import Backend from "i18next-node-fs-backend"
-import i18nextMiddleware from "i18next-http-middleware"
 import swaggerUi from "swagger-ui-express"
 import swaggerJsdoc from "swagger-jsdoc"
-
-i18next
-  .use(Backend)
-  .use(i18nextMiddleware.LanguageDetector)
-  .init(
-    {
-      backend: {
-        loadPath: __dirname + "/../locales/{{lng}}/{{ns}}.json"
-      },
-      fallbackLng: "vi",
-      preload: ["vi", "en"],
-      ns: ["translation", "product"]
-    },
-    (err, t) => {
-      if (err) return console.error(err)
-      console.log("i18next is ready...")
-    }
-  )
 
 const specs = swaggerJsdoc({
   definition: {
@@ -94,16 +73,10 @@ app.use(
   })
 )
 
-app.use(i18nextMiddleware.handle(i18next))
 app.use(morgan("common"))
 app.use(express.urlencoded({ extended: true, limit: "50mb" }))
 
 app.use(express.json({ limit: "50mb" }))
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs, { explorer: true }))
-
-app.get("/", (req: Request, res: Response) => {
-  const response = req.t("GREETING")
-  res.send(response)
-})
 
 export default app

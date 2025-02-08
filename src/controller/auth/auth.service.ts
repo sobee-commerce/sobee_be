@@ -211,4 +211,14 @@ export class AuthService implements AuthRepository {
 
     return null
   }
+
+  async forgotPassword(emailOrPhone: string) {
+    const user = await User.findOne({ $or: [{ phoneNumber: emailOrPhone }, { email: emailOrPhone }] })
+
+    if (!user) {
+      throw new UserNotFoundException()
+    }
+
+    // send email or sms here
+  }
 }

@@ -1,5 +1,4 @@
 import "express"
-import { TFunction } from "i18next"
 import { IKeyToken } from "@/interface/schema"
 
 declare module "express" {
@@ -9,6 +8,5 @@ declare module "express" {
     keyToken: IKeyToken
     staffRole?: string | object
     permission: boolean
-    t: TFunction<"translation", undefined>
   }
 }

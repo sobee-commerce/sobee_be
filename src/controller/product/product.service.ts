@@ -380,7 +380,15 @@ export class ProductService implements ProductRepository {
     const product = await Product.findById(processedSlug)
     if (!product) throw new ObjectModelNotFoundException("Product not found")
 
-    return await Product.find({ category: product.category, isDraft: false }, {}, this.generalPopulate)
+    return await Product.find(
+      {
+        category: product.category,
+        isDraft: false,
+        _id: { $ne: product._id }
+      },
+      {},
+      this.generalPopulate
+    )
       .sort({ createdAt: -1 })
       .limit(10)
   }

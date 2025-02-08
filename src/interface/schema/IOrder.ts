@@ -14,6 +14,7 @@ export interface IOrder {
   taxFee: number
   total: number
   paymentMethod: EPaymentMethod
+  isPaid: boolean
   shippingAddress: IAddress
   phoneNumber: string
   emailAddress: string

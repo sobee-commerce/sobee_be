@@ -22,24 +22,37 @@ export const createTokenPair = async (
   privateKey: string
 ): Promise<{ accessToken: string; refreshToken: string }> => {
   return new Promise((resolve, reject) => {
-    jwt.sign(payload, publicKey, { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "2 days" }, (err, accessToken) => {
-      if (accessToken == undefined || err) {
-        reject(err)
-        throw new Error("Failed to create access token")
-      }
-      jwt.sign(
-        payload,
-        privateKey,
-        { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "7 days" },
-        (err, refreshToken) => {
-          if (refreshToken == undefined || err) {
-            reject(err)
-            throw new Error("Failed to create refresh token")
-          }
-          resolve({ accessToken, refreshToken })
+    jwt.sign(
+      payload,
+      publicKey,
+      {
+        expiresIn: Number(
+          process.env.ACCESS_TOKEN_EXPIRES_IN || 7 * 24 * 60 * 60 * 1000 // 7 days
+        )
+      },
+      (err, accessToken) => {
+        if (accessToken == undefined || err) {
+          reject(err)
+          throw new Error("Failed to create access token")
         }
-      )
-    })
+        jwt.sign(
+          payload,
+          privateKey,
+          {
+            expiresIn: Number(
+              process.env.REFRESH_TOKEN_EXPIRES_IN || 14 * 24 * 60 * 60 * 1000 // 14 days
+            )
+          },
+          (err, refreshToken) => {
+            if (refreshToken == undefined || err) {
+              reject(err)
+              throw new Error("Failed to create refresh token")
+            }
+            resolve({ accessToken, refreshToken })
+          }
+        )
+      }
+    )
   })
   // const accessToken = jwt.sign(payload, publicKey, {
   //     expiresIn: "2 days"

@@ -27,6 +27,12 @@ const CouponSchema = new Schema<ICoupon>(
         ref: SCHEMA_NAME.USERS
       }
     ],
+    customerSaved: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: SCHEMA_NAME.USERS
+      }
+    ],
     minOrderValue: {
       type: Number,
       default: 0

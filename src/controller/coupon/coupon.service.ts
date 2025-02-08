@@ -54,7 +54,15 @@ export class CouponService implements CouponRepository {
   }
 
   async getById(id: string): Promise<ICoupon> {
-    const coupon = await Coupon.findById(id)
+    const coupon = await Coupon.findById(
+      id,
+      {},
+      {
+        populate: {
+          path: "productApply"
+        }
+      }
+    )
     if (!coupon) throw new ObjectModelNotFoundException("Coupon not found")
     return coupon
   }
@@ -125,7 +133,6 @@ export class CouponService implements CouponRepository {
         )
       }
     }
-    console.log(coupon.customerUsed.toString(), userId)
     if (coupon.customerUsed.toString().includes(userId)) throw new BadRequestResponse("Coupon already used")
 
     return coupon
@@ -194,5 +201,26 @@ export class CouponService implements CouponRepository {
     if (!coupon) throw new ObjectModelNotFoundException("Coupon not found")
 
     return coupon
+  }
+
+  async save(couponCode: string, userId: string) {
+    const coupon = await Coupon.findOne({ code: couponCode })
+    if (!coupon) throw new ObjectModelNotFoundException("Coupon not found")
+    const isSaved = coupon.customerSaved.includes(userId as any)
+    if (isSaved) {
+      coupon.customerSaved = coupon.customerSaved.filter((id) => id.toString() !== userId) as any[]
+    } else {
+      coupon.customerSaved.push(userId as any)
+    }
+    await coupon.save()
+    return coupon
+  }
+
+  async getSavedCoupons(userId: string): Promise<ICoupon[]> {
+    return await Coupon.find({
+      customerSaved: {
+        $in: [userId]
+      }
+    })
   }
 }

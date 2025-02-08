@@ -39,6 +39,10 @@ const OrderSchema = new Schema<IOrder>(
       enum: Object.values(EPaymentMethod),
       default: EPaymentMethod.COD
     },
+    isPaid: {
+      type: Boolean,
+      default: false
+    },
     shippingAddress: {
       type: AddressSchema,
       required: true

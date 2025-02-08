@@ -19,7 +19,9 @@ export class CouponController implements IRoute {
     USE: "/:couponId/use",
     VALIDATE: "/validate",
     TODAY: "/today",
-    CODE: "/code/:code"
+    CODE: "/code/:code",
+    SAVE: "/:code/save",
+    GET_SAVED_COUPON: "/saved"
   }
 
   private static readonly couponService = new CouponService()
@@ -60,9 +62,10 @@ export class CouponController implements IRoute {
       asyncHandler(this.deleteCoupon)
     )
     this.router.get(this.PATHS.ROOT, asyncHandler(this.getCoupons))
-    middleware.verifyToken, this.router.get(this.PATHS.USER, middleware.verifyToken, asyncHandler(this.getUserCoupons))
+    this.router.get(this.PATHS.USER, middleware.verifyToken, asyncHandler(this.getUserCoupons))
     this.router.get(this.PATHS.CODE, asyncHandler(this.getCouponByCode))
     this.router.get(this.PATHS.TODAY, middleware.verifyToken, asyncHandler(this.getTodayCoupons))
+    this.router.get(this.PATHS.GET_SAVED_COUPON, middleware.verifyToken, asyncHandler(this.getSavedCoupons))
     this.router.get(this.PATHS.COUPON, asyncHandler(this.getCoupon))
     this.router.put(
       this.PATHS.ACTIVE,
@@ -83,6 +86,8 @@ export class CouponController implements IRoute {
       middleware.mustHaveFields<{ code: string; orderProducts: string[]; orderValue: number }>("code", "orderValue"),
       asyncHandler(this.validateCoupon)
     )
+
+    this.router.put(this.PATHS.SAVE, middleware.verifyToken, asyncHandler(this.saveCoupon))
   }
 
   private async createCoupon(req: Request, res: Response): Promise<void> {
@@ -142,6 +147,16 @@ export class CouponController implements IRoute {
 
   private async getCouponByCode(req: Request, res: Response): Promise<void> {
     const data = await CouponController.couponService.getByCode(req.params.code)
+    new SuccessfulResponse(data, HttpStatusCode.OK).from(res)
+  }
+
+  private async saveCoupon(req: Request, res: Response): Promise<void> {
+    const data = await CouponController.couponService.save(req.params.code, req.userId)
+    new SuccessfulResponse(data, HttpStatusCode.OK, "Coupon saved successfully").from(res)
+  }
+
+  private async getSavedCoupons(req: Request, res: Response): Promise<void> {
+    const data = await CouponController.couponService.getSavedCoupons(req.userId.toString())
     new SuccessfulResponse(data, HttpStatusCode.OK).from(res)
   }
 

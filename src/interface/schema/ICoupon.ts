@@ -15,6 +15,7 @@ export interface ICoupon {
   usageLimit: number
   usageCount: number
   customerUsed: string[] | ICustomer[] | Types.ObjectId[]
+  customerSaved: string[] | ICustomer[] | Types.ObjectId[]
   status: ECouponStatus
   applyTo: ECouponApplyType
   productApply: string[] | Types.ObjectId[] | IProduct[]
