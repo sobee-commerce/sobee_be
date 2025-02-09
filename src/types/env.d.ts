@@ -13,6 +13,9 @@ declare global {
       MINIO_SECRET_KEY: string
       MINIO_USE_SSL: string
 
+      ACCESS_TOKEN_SECRET: string
+      REFRESH_TOKEN_SECRET: string
+
       CLOUDINARY_UPLOAD_PRESET: string
       CLOUDINARY_CLOUD_NAME: string
       CLOUDINARY_API_KEY: string

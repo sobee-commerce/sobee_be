@@ -88,7 +88,11 @@ export class AuthService implements AuthRepository {
   async login(data: LoginRequest): Promise<LoginResponse> {
     const { emailOrPhone, password } = data
 
+    console.log("emailOrPhone", emailOrPhone)
+    console.log("password", password)
+
     const user = await User.findOne({ $or: [{ phoneNumber: emailOrPhone }, { email: emailOrPhone }] })
+    console.log(user)
 
     if (!user) {
       throw new UserNotFoundException()
@@ -106,19 +110,11 @@ export class AuthService implements AuthRepository {
       throw new WrongPasswordException()
     }
 
-    const { privateKey, publicKey } = await createKeyPair()
     const { accessToken, refreshToken } = await createTokenPair(
       { userId: user._id, role: user.role },
-      publicKey,
-      privateKey
+      process.env.ACCESS_TOKEN_SECRET,
+      process.env.REFRESH_TOKEN_SECRET
     )
-
-    await KeyTokenService.createKeyToken({
-      userId: user._id,
-      publicKey,
-      privateKey,
-      refreshToken
-    })
 
     return {
       accessToken,
@@ -149,18 +145,17 @@ export class AuthService implements AuthRepository {
 
   async handleRefreshToken(
     user: { userId: string; role: string },
-    refreshToken: string,
-    keyStore: IKeyToken
+    refreshToken: string
   ): Promise<RefreshTokenResponse> {
-    if (keyStore.refreshTokenUsed.includes(refreshToken)) {
-      //doing something here because the token is already used before
-      KeyTokenService.deleteByUserId(keyStore.user)
-      throw new Error("Token already used")
-    }
+    // if (keyStore.refreshTokenUsed.includes(refreshToken)) {
+    //   //doing something here because the token is already used before
+    //   KeyTokenService.deleteByUserId(keyStore.user)
+    //   throw new Error("Token already used")
+    // }
 
-    if (refreshToken !== keyStore.refreshToken) {
-      throw new Error("Invalid token")
-    }
+    // if (refreshToken !== keyStore.refreshToken) {
+    //   throw new Error("Invalid token")
+    // }
 
     const foundUser = await User.findById(user.userId)
     if (!foundUser) {
@@ -169,27 +164,15 @@ export class AuthService implements AuthRepository {
 
     const { accessToken, refreshToken: newRefreshToken } = await createTokenPair(
       { userId: user.userId, role: user.role },
-      keyStore.publicKey,
-      keyStore.privateKey
-    )
-
-    await KeyToken.updateOne(
-      { refreshToken: refreshToken },
-      {
-        $set: {
-          refreshToken: newRefreshToken
-        },
-        $push: {
-          refreshTokenUsed: refreshToken
-        }
-      }
+      process.env.ACCESS_TOKEN_SECRET,
+      process.env.REFRESH_TOKEN_SECRET
     )
 
     return { accessToken, refreshToken: newRefreshToken }
   }
 
-  async logout(userId: string): Promise<object> {
-    return await KeyTokenService.deleteByUserId(userId)
+  async logout(userId: string): Promise<string> {
+    return "Logout successfully"
   }
 
   async changePassword(data: ChangePasswordRequest): Promise<null> {

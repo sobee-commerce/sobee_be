@@ -89,8 +89,7 @@ export class AuthController implements IRoute {
   private async handleRefreshToken(req: Request, res: Response) {
     const response = await AuthController.authService.handleRefreshToken(
       { userId: req.userId, role: req.role },
-      req.body.refreshToken,
-      req.keyToken
+      req.body.refreshToken
     )
     new SuccessfulResponse(response, HttpStatusCode.OK, "Refresh token successfully").from(res)
   }

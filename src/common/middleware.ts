@@ -21,25 +21,24 @@ class Middleware implements IMiddleware {
     try {
       // console.log(req.header(HEADER.AUTHORIZATION))
 
-      //check if client id is present in the header
-      const clientId = req.header(HEADER.CLIENTID)
+      // //check if client id is present in the header
+      // const clientId = req.header(HEADER.CLIENTID)
 
-      if (!clientId) return new ErrorResponse(HttpStatusCode.BAD_REQUEST, "Missing client id").from(res)
+      // if (!clientId) return new ErrorResponse(HttpStatusCode.BAD_REQUEST, "Missing client id").from(res)
 
-      //check if the client id is present in the database
-      const keyStore = await KeyTokenService.findbyUserId(clientId)
-      if (!keyStore) return new ErrorResponse(HttpStatusCode.UNAUTHORIZED, "Not found keyStore").from(res)
+      // //check if the client id is present in the database
+      // const keyStore = await KeyTokenService.findbyUserId(clientId)
+      // if (!keyStore) return new ErrorResponse(HttpStatusCode.UNAUTHORIZED, "Not found keyStore").from(res)
 
       //check if have refresh token in the header or body
       const refreshToken = req.header(HEADER.REFRESHTOKEN) || req.body.refreshToken
       if (refreshToken) {
-        const decoded = verifyToken(refreshToken, keyStore.privateKey) as JwtPayload
-        if (clientId !== decoded.userId)
-          return new ErrorResponse(HttpStatusCode.UNAUTHORIZED, "Invalid request").from(res)
+        const decoded = verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET) as JwtPayload
+        // if (clientId !== decoded.userId)
+        //   return new ErrorResponse(HttpStatusCode.UNAUTHORIZED, "Invalid request").from(res)
 
         req.userId = decoded.userId
         req.role = decoded.role
-        req.keyToken = keyStore
         return next()
       }
 
@@ -52,19 +51,17 @@ class Middleware implements IMiddleware {
       }
 
       // const decoded = jwt.verify(accessToken, process.env.JWT_SECRET) as JwtPayload
-      const decoded = verifyToken(accessToken, keyStore.publicKey) as JwtPayload
+      const decoded = verifyToken(accessToken, process.env.ACCESS_TOKEN_SECRET) as JwtPayload
 
       //check if the client id in the token is the same as the client id in the header
-      if (clientId !== decoded.userId)
-        return new ErrorResponse(
-          HttpStatusCode.UNAUTHORIZED,
-          "Access denied. Your client id is not match with token"
-        ).from(res)
+      // if (clientId !== decoded.userId)
+      //   return new ErrorResponse(
+      //     HttpStatusCode.UNAUTHORIZED,
+      //     "Access denied. Your client id is not match with token"
+      //   ).from(res)
 
       req.userId = decoded.userId
       req.role = decoded.role
-      req.keyToken = keyStore
-
       let user: IUser | null = null
 
       if (decoded.role === ERole.STAFF) {

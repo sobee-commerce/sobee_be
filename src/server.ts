@@ -27,15 +27,15 @@ async function runHttpServer() {
 async function runSocketServer() {
   io.use(async (socket, next) => {
     const accessToken = (socket.handshake.headers.token as string) ?? ""
-    const clientId = (socket.handshake.headers.client as string) ?? ""
+    // const clientId = (socket.handshake.headers.client as string) ?? ""
 
-    if (!accessToken || !clientId) return next(new Error("Authentication error!"))
+    // if (!accessToken || !clientId) return next(new Error("Authentication error!"))
 
-    const keyToken = await KeyToken.findOne({ user: clientId }).lean()
+    // const keyToken = await KeyToken.findOne({ user: clientId }).lean()
 
-    if (!keyToken) return next(new Error("Authentication error!"))
+    // if (!keyToken) return next(new Error("Authentication error!"))
 
-    const decoded = verifyToken(accessToken, keyToken.publicKey) as JwtPayload
+    const decoded = verifyToken(accessToken, process.env.ACCESS_TOKEN_SECRET) as JwtPayload
 
     let user: IUser | null = null
 
@@ -64,7 +64,7 @@ async function runSocketServer() {
 
     socket.data.userId = decoded.userId
     socket.data.role = decoded.role
-    socket.data.keyToken = keyToken as IKeyToken
+    // socket.data.keyToken = keyToken as IKeyToken
     socket.data.staffRole = ((user?._user as IStaff)?.staffRole as IRole)?.role_name
 
     next()
@@ -85,7 +85,7 @@ async function start() {
   console.log(message)
   await runHttpServer()
   getRoutes(app)
-  await redisClient.connect().catch((err) => console.log(err))
+  // await redisClient.connect().catch((err) => console.log(err))
 }
 
 start()
