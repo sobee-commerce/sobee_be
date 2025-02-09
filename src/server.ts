@@ -85,7 +85,7 @@ async function start() {
   console.log(message)
   await runHttpServer()
   getRoutes(app)
-  // await redisClient.connect().catch((err) => console.log(err))
+  await redisClient.connect().catch((err) => console.log(err))
 }
 
 start()
