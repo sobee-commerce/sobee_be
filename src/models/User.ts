@@ -35,6 +35,10 @@ const UserSchema = new Schema<IUser>(
       type: Schema.Types.ObjectId,
       refPath: "role",
       default: null
+    },
+    fcmToken: {
+      type: String,
+      default: null
     }
   },
   {

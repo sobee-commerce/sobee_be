@@ -5,8 +5,9 @@ import { IUser } from "./IUser"
 export interface INotification {
   title: string
   content: string
-  read: boolean
-  to: string | Types.ObjectId | IUser
+  imageUrl?: string
+  read: string[]
+  to: string[]
   type: ENotificationType
   redirectUrl: string
 }

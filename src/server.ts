@@ -35,7 +35,12 @@ async function runSocketServer() {
 
     // if (!keyToken) return next(new Error("Authentication error!"))
 
-    const decoded = verifyToken(accessToken, process.env.ACCESS_TOKEN_SECRET) as JwtPayload
+    let decoded: JwtPayload
+    try {
+      decoded = verifyToken(accessToken, process.env.ACCESS_TOKEN_SECRET) as JwtPayload
+    } catch (error) {
+      return next(new ErrorResponse(HttpStatusCode.UNAUTHORIZED, "Invalid token"))
+    }
 
     let user: IUser | null = null
 

@@ -28,6 +28,7 @@ import {
   OrderController
 } from "@/controller"
 import { AnalyticsController } from "@/controller/analytics"
+import { NotificationController } from "@/controller/notification/notification.controller"
 import { Express } from "express"
 
 function getRoutes(app: Express) {
@@ -58,7 +59,8 @@ function getRoutes(app: Express) {
     new AssetController(),
     new QuestionController(),
     new FavoriteController(),
-    new AnalyticsController()
+    new AnalyticsController(),
+    new NotificationController()
   ]
 
   controllers.forEach((controller) => {

@@ -14,4 +14,5 @@ export interface IUser<T = ICustomer | IAdmin | IStaff> {
   dateOfBirth: Date
   role: ERole
   _user: T | Types.ObjectId | string
+  fcmToken: string | null
 }

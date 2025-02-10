@@ -6,25 +6,19 @@ import { SCHEMA_NAME } from "./schema-name"
 const NotificationSchema = new Schema<INotification>(
   {
     content: String,
-    read: {
-      type: Boolean,
-      default: false
-    },
+    read: [String],
     redirectUrl: String,
     title: {
       type: String,
       required: true
     },
+    imageUrl: String,
     type: {
       type: String,
       enum: Object.values(ENotificationType),
       default: ENotificationType.INFO
     },
-    to: {
-      type: Schema.Types.ObjectId,
-      ref: SCHEMA_NAME.USERS,
-      default: null
-    }
+    to: [String]
   },
   {
     versionKey: false,
