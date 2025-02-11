@@ -90,7 +90,7 @@ export class AuthController implements IRoute {
   }
 
   private async loginWithGoogle(req: Request, res: Response) {
-    const response = await AuthController.authService.loginWithGoogle(req.body)
+    const response = await AuthController.authService.loginWithGoogle(req.body.email)
     new SuccessfulResponse(response, HttpStatusCode.OK, "Login with google successfully").from(res)
   }
 
