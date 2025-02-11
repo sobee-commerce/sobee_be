@@ -1,13 +1,15 @@
 import { ObjectModelNotFoundException, ObjectModelOperationException } from "@/common/exceptions"
 import { generateNameId, getIdFromNameId, redisClient } from "@/common/utils"
-import { EOrderStatus, EProductType } from "@/enum"
+import { EOrderStatus, EProductType, ERole } from "@/enum"
 import { IProduct, IVariant, TotalAndData } from "@/interface"
-import { Order, Product } from "@/models"
+import { Order, Product, User } from "@/models"
 import { DeleteResult } from "mongodb"
 import { BrandService } from "../brand"
 import { CategoryService } from "../category"
 import { CreateProductRequest } from "./dto"
 import { ProductRepository } from "./product.repository"
+import { sendMail } from "@/common/utils/mailer"
+import { NotificationService } from "../notification/notification.service"
 
 export class ProductService implements ProductRepository {
   private readonly categoryService: CategoryService
@@ -134,6 +136,21 @@ export class ProductService implements ProductRepository {
     }
 
     await product.save()
+
+    const users = await User.find({ role: ERole.CUSTOMER })
+    sendMail({
+      to: users.map((user) => user.email),
+      subject: "New product just released",
+      text: `New product ${product.name} just released. Get it now on our store.`
+    })
+
+    NotificationService.sendMulticastNotification({
+      tokens: users.map((user) => user.fcmToken).filter((token) => token !== null),
+      notification: {
+        title: "New product just released",
+        body: `New product ${product.name} just released. Get it now on our store.`
+      }
+    })
 
     return product
   }
@@ -395,32 +412,35 @@ export class ProductService implements ProductRepository {
 
   async getRecommended(productId: string): Promise<IProduct[]> {
     const processedSlug = getIdFromNameId(productId)
-    let recommends: string[] = []
     const cachedRecommend = await redisClient.get(`recommendations:${processedSlug}`)
 
     if (cachedRecommend) {
-      recommends = JSON.parse(cachedRecommend)
+      return JSON.parse(cachedRecommend) as IProduct[]
     } else {
-      const recommendRes = await fetch(process.env.RECOMMENDATION_API_URL! + "?input=" + processedSlug, {
-        method: "POST"
-      })
+      // const recommendRes = await fetch(process.env.RECOMMENDATION_API_URL! + "?input=" + processedSlug, {
+      //   method: "POST"
+      // })
 
-      const recommendData = await recommendRes.json()
-      recommends = recommendData.recommendations
+      // const recommendData = await recommendRes.json()
+      // recommends = recommendData.recommendations
+      const product = await Product.findById(processedSlug)
+
+      if (!product) throw new ObjectModelNotFoundException("Product not found")
+
+      const recommends = await Product.find(
+        {
+          category: product.category,
+          isDraft: false,
+          _id: { $ne: product._id }
+        },
+        {},
+        this.generalPopulate
+      )
+        .sort({ createdAt: -1 })
+        .limit(10)
       await redisClient.set(`recommendations:${processedSlug}`, JSON.stringify(recommends))
+      return recommends
     }
-
-    const products = await Product.find(
-      {
-        _id: {
-          $in: recommends
-        }
-      },
-      {},
-      this.generalPopulate
-    )
-
-    return products
   }
 
   async getBestSeller(): Promise<IProduct[]> {

@@ -1,9 +1,11 @@
 import { IReply, IReview, TotalAndData } from "@/interface"
 import { ReviewRepository } from "./review.repository"
-import { Product, Reply, Review } from "@/models"
+import { Product, Reply, Review, User } from "@/models"
 import { ObjectModelNotFoundException } from "@/common/exceptions"
 import { DeleteResult } from "mongodb"
 import { getIdFromNameId } from "@/common/utils"
+import { sendMail } from "@/common/utils/mailer"
+import { NotificationService } from "../notification/notification.service"
 
 export class ReviewService implements ReviewRepository {
   async createReview(data: IReview): Promise<IReview> {
@@ -26,6 +28,26 @@ export class ReviewService implements ReviewRepository {
       },
       { new: true } // Return the updated product document
     )
+
+    const user = await User.findById(data.customer)
+
+    if (user) {
+      sendMail({
+        to: user.email,
+        subject: "Thanks for your review",
+        text: `Thanks for your review. We hope you enjoy our product.`
+      })
+
+      if (user.fcmToken) {
+        NotificationService.sendNotification({
+          token: user.fcmToken,
+          notification: {
+            title: "Thanks for your review",
+            body: `Thanks for your review. We hope you enjoy our product.`
+          }
+        })
+      }
+    }
 
     return review
   }

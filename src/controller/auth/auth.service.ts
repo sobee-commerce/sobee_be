@@ -79,6 +79,12 @@ export class AuthService implements AuthRepository {
     await newUser.save()
     await newCredential.save()
 
+    sendMail({
+      to: email,
+      subject: "Register successfully",
+      text: `You have successfully registered. Thank you for joining us.`
+    })
+
     return {
       accessToken,
       refreshToken,
@@ -120,6 +126,48 @@ export class AuthService implements AuthRepository {
       accessToken,
       refreshToken,
       user
+    }
+  }
+
+  async loginWithGoogle(email: string) {
+    const user = await User.findOne({ email })
+
+    if (user) {
+      const { accessToken, refreshToken } = await createTokenPair(
+        { userId: user._id, role: user.role },
+        process.env.ACCESS_TOKEN_SECRET,
+        process.env.REFRESH_TOKEN_SECRET
+      )
+
+      return {
+        accessToken,
+        refreshToken,
+        user
+      }
+    }
+
+    const newUser = new User({
+      email,
+      role: ERole.CUSTOMER
+    })
+
+    const newCustomer = new Customer()
+
+    newUser._user = newCustomer._id
+
+    await newCustomer.save()
+    await newUser.save()
+
+    const { accessToken, refreshToken } = await createTokenPair(
+      { userId: newUser._id, role: newUser.role },
+      process.env.ACCESS_TOKEN_SECRET,
+      process.env.REFRESH_TOKEN_SECRET
+    )
+
+    return {
+      accessToken,
+      refreshToken,
+      user: newUser
     }
   }
 

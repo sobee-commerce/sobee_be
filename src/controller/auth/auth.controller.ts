@@ -15,6 +15,7 @@ export class AuthController implements IRoute {
   private readonly PATHS = {
     REGISTER: "/register",
     LOGIN: "/login",
+    LOGIN_WITH_GOOGLE: "/login/google",
     REFRESH_TOKEN: "/refresh-token",
     LOG_OUT: "/logout",
     ME: "/me",
@@ -43,6 +44,13 @@ export class AuthController implements IRoute {
       middleware.mustHaveFields<LoginRequest>("emailOrPhone", "password"),
       asyncHandler(this.login)
     )
+
+    this.router.post(
+      this.PATHS.LOGIN_WITH_GOOGLE,
+      middleware.mustHaveFields("email"),
+      asyncHandler(this.loginWithGoogle)
+    )
+
     this.router.get(this.PATHS.ME, middleware.verifyToken, asyncHandler(this.me))
     this.router.post(
       this.PATHS.REFRESH_TOKEN,
@@ -79,6 +87,11 @@ export class AuthController implements IRoute {
   private async login(req: Request, res: Response) {
     const response = await AuthController.authService.login(req.body)
     new SuccessfulResponse(response, HttpStatusCode.OK, "Login successfully").from(res)
+  }
+
+  private async loginWithGoogle(req: Request, res: Response) {
+    const response = await AuthController.authService.loginWithGoogle(req.body)
+    new SuccessfulResponse(response, HttpStatusCode.OK, "Login with google successfully").from(res)
   }
 
   private async me(req: Request, res: Response) {

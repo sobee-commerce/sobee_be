@@ -1,9 +1,11 @@
 import { ICoupon } from "@/interface"
 import { CouponRepository } from "./coupon.repository"
-import { Coupon } from "@/models"
+import { Coupon, User } from "@/models"
 import { ObjectModelNotFoundException } from "@/common/exceptions"
-import { ECouponApplyType, ECouponStatus } from "@/enum"
+import { ECouponApplyType, ECouponStatus, ERole } from "@/enum"
 import { BadRequestResponse } from "@/common/utils"
+import { sendMail } from "@/common/utils/mailer"
+import { NotificationService } from "../notification/notification.service"
 
 export class CouponService implements CouponRepository {
   async create(data: ICoupon): Promise<ICoupon> {
@@ -15,7 +17,27 @@ export class CouponService implements CouponRepository {
 
     if (discountValue < 0) throw new Error("Discount value cannot be negative")
 
-    return await Coupon.create(data)
+    const coupon = await Coupon.create(data)
+
+    const users = await User.find({
+      role: ERole.CUSTOMER
+    })
+
+    sendMail({
+      to: users.map((user) => user.email),
+      subject: "New coupon",
+      text: `New coupon ${coupon.code} is available. Get it now on your next purchase.`
+    })
+
+    NotificationService.sendMulticastNotification({
+      tokens: users.map((user) => user.fcmToken).filter((token) => token !== null),
+      notification: {
+        title: "New coupon",
+        body: `New coupon ${coupon.code} is available. Get it now on your next purchase.`
+      }
+    })
+
+    return coupon
   }
   async update(id: string, data: Partial<ICoupon>): Promise<ICoupon> {
     const { startDate, endDate, discountValue, code } = data

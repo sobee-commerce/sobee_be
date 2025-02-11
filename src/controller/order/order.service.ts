@@ -2,11 +2,13 @@ import { ObjectModelNotFoundException, ObjectModelOperationException } from "@/c
 import { generateOrderId } from "@/common/utils"
 import { EOrderStatus } from "@/enum"
 import { IOrder, IOrderItem, IProduct, TotalAndData } from "@/interface"
-import { Address, Order, OrderItem, Product } from "@/models"
+import { Address, Order, OrderItem, Product, User } from "@/models"
 import { DeleteResult } from "mongodb"
 import { CouponService } from "../coupon"
 import { OrderRepository } from "./order.repository"
 import Stripe from "stripe"
+import { sendMail } from "@/common/utils/mailer"
+import { NotificationService } from "../notification/notification.service"
 
 export class OrderService implements OrderRepository {
   private readonly couponService: CouponService
@@ -446,6 +448,33 @@ export class OrderService implements OrderRepository {
       })
     }
     order.status = status
+
+    sendMail({
+      to: order.emailAddress,
+      subject: "Order status updated",
+      text: `Your order ${order.orderGeneratedId} status has been updated to ${status}`
+    })
+
+    const user = await User.findById(order.customer)
+
+    if (user?.fcmToken) {
+      NotificationService.sendNotification({
+        token: user.fcmToken,
+        notification: {
+          title: "Order status updated",
+          body: `Your order ${order.orderGeneratedId} status has been updated to ${status}`
+        },
+        android: {
+          notification: {
+            title: "Order status updated",
+            body: `Your order ${order.orderGeneratedId} status has been updated to ${status}`
+          },
+          data: {
+            orderId: order.id!
+          }
+        }
+      })
+    }
 
     await order.save()
 
