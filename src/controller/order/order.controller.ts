@@ -20,7 +20,8 @@ export class OrderController implements IRoute {
     CANCEL: "/:id/status/cancel",
     MOCK: "/mock",
     REORDER: "/:id/reorder",
-    PAYMENT_SHEET: "/payment-sheet"
+    PAYMENT_SHEET: "/payment-sheet",
+    RECEIVE: "/:id/status/receive"
   }
 
   private static readonly orderService = new OrderService()
@@ -58,6 +59,7 @@ export class OrderController implements IRoute {
       middleware.mustHaveFields("status"),
       asyncHandler(this.updateOrderStatus)
     )
+    this.router.put(this.PATHS.RECEIVE, middleware.verifyToken, asyncHandler(this.receiveOrder))
     this.router.delete(this.PATHS.CANCEL, middleware.verifyToken, asyncHandler(this.cancelOrder))
     this.router.put(this.PATHS.REORDER, middleware.verifyToken, asyncHandler(this.reOrder))
   }
@@ -124,6 +126,11 @@ export class OrderController implements IRoute {
   private async updateOrderStatus(req: Request, res: Response): Promise<void> {
     const order = await OrderController.orderService.updateOrderStatus(req.params.id, req.body.status)
     new SuccessfulResponse(order, HttpStatusCode.OK, "Order status updated successfully").from(res)
+  }
+
+  private async receiveOrder(req: Request, res: Response): Promise<void> {
+    const order = await OrderController.orderService.updateOrderStatus(req.params.id, EOrderStatus.COMPLETED)
+    new SuccessfulResponse(order, HttpStatusCode.OK, "Order received successfully").from(res)
   }
 
   private async cancelOrder(req: Request, res: Response): Promise<void> {
