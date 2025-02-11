@@ -23,10 +23,14 @@ export class CouponService implements CouponRepository {
       role: ERole.CUSTOMER
     })
 
-    sendMail({
-      to: users.map((user) => user.email),
-      subject: "New coupon",
-      text: `New coupon ${coupon.code} is available. Get it now on your next purchase.`
+    const emails = users.map((user) => user.email)
+
+    emails.forEach((email) => {
+      sendMail({
+        to: email,
+        subject: "New coupon",
+        text: `New coupon ${coupon.code} is available. Get it now on your next purchase.`
+      })
     })
 
     NotificationService.sendMulticastNotification({

@@ -1,6 +1,6 @@
 import { ObjectModelNotFoundException, ObjectModelOperationException } from "@/common/exceptions"
 import { generateOrderId } from "@/common/utils"
-import { EOrderStatus } from "@/enum"
+import { ENotificationType, EOrderStatus } from "@/enum"
 import { IOrder, IOrderItem, IProduct, TotalAndData } from "@/interface"
 import { Address, Order, OrderItem, Product, User } from "@/models"
 import { DeleteResult } from "mongodb"
@@ -470,7 +470,9 @@ export class OrderService implements OrderRepository {
             body: `Your order ${order.orderGeneratedId} status has been updated to ${status}`
           },
           data: {
-            orderId: order.id!
+            orderId: order.id!,
+            status,
+            type: ENotificationType.ORDER
           }
         }
       })

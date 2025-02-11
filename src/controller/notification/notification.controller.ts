@@ -5,6 +5,7 @@ import { Request, Response, Router } from "express"
 import { NotificationService } from "./notification.service"
 import { UserService } from "../user"
 import { asyncHandler, HttpStatusCode, SuccessfulResponse } from "@/common/utils"
+import { sendMail } from "@/common/utils/mailer"
 
 export class NotificationController implements IRoute {
   private readonly router: Router
@@ -15,7 +16,8 @@ export class NotificationController implements IRoute {
   private readonly PATHS = {
     ROOT: "/",
     PUSH: "/push",
-    SAVE_TOKEN: "/save-token"
+    SAVE_TOKEN: "/save-token",
+    ID: "/:id"
   }
 
   constructor(path = "/api/notification") {
@@ -33,11 +35,25 @@ export class NotificationController implements IRoute {
       asyncHandler(this.pushNotificationToAll)
     )
     this.router.post(this.PATHS.SAVE_TOKEN, middleware.mustHaveFields("fcmToken"), asyncHandler(this.saveToken))
+    this.router.get(this.PATHS.ROOT, asyncHandler(this.getAllNotifications))
+    this.router.delete(this.PATHS.ID, asyncHandler(this.deleteNotification))
+  }
+
+  private async getAllNotifications(req: Request, res: Response): Promise<void> {
+    const notifications = await NotificationService.getAllNotifications()
+    new SuccessfulResponse(notifications, HttpStatusCode.OK, "Get all notifications successfully").from(res)
+  }
+
+  private async deleteNotification(req: Request, res: Response): Promise<void> {
+    const { id } = req.params
+    const notification = await NotificationService.deleteNotification(id)
+    new SuccessfulResponse(notification, HttpStatusCode.OK, "Delete notification successfully").from(res)
   }
 
   private async pushNotificationToAll(req: Request, res: Response): Promise<void> {
     const { title, content, redirectUrl, type, imageUrl } = req.body as INotification
     const tokens = await NotificationController.userService.getUsersFcmToken()
+    const emails = await NotificationController.userService.getCustomersEmail()
 
     const data = {
       title,
@@ -69,6 +85,15 @@ export class NotificationController implements IRoute {
       },
       tokens
     })
+
+    emails.forEach((email) => {
+      sendMail({
+        to: email,
+        subject: title,
+        text: content
+      })
+    })
+
     new SuccessfulResponse(notification, HttpStatusCode.OK, "Push notification successfully").from(res)
   }
 

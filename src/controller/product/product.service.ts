@@ -138,10 +138,13 @@ export class ProductService implements ProductRepository {
     await product.save()
 
     const users = await User.find({ role: ERole.CUSTOMER })
-    sendMail({
-      to: users.map((user) => user.email),
-      subject: "New product just released",
-      text: `New product ${product.name} just released. Get it now on our store.`
+    const emails = users.map((user) => user.email)
+    emails.forEach((email) => {
+      sendMail({
+        to: email,
+        subject: "New product just released",
+        text: `New product ${product.name} just released. Get it now on our store.`
+      })
     })
 
     NotificationService.sendMulticastNotification({

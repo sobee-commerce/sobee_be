@@ -3,6 +3,7 @@ import { UpdateUserInfoRequest, UpdateUserInfoResponse } from "./dto"
 import { UserRepository } from "./user.repository"
 import { User } from "@/models"
 import { ObjectModelNotFoundException } from "@/common/exceptions"
+import { ERole } from "@/enum"
 
 export class UserService implements UserRepository {
   async updateUserInfo(id: Types.ObjectId | string, req: UpdateUserInfoRequest): Promise<UpdateUserInfoResponse> {
@@ -34,6 +35,11 @@ export class UserService implements UserRepository {
   async getUsersFcmToken(): Promise<string[]> {
     const users = await User.find({ fcmToken: { $ne: null } })
     return users.map((user) => user.fcmToken as string)
+  }
+
+  async getCustomersEmail(): Promise<string[]> {
+    const users = await User.find({ role: ERole.CUSTOMER })
+    return users.map((user) => user.email)
   }
 
   async saveFcmToken(userId: string, fcmToken: string) {
